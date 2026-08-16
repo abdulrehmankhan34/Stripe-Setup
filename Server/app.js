@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import Stripe from "stripe";
 import cors from "cors";
 import nodemon from "nodemon";
+import Order from "./models/Order.js";
 // .env file load hogi
 dotenv.config();
 
@@ -16,49 +17,65 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 app.post(
   "/webhook",
   express.raw({ type: "application/json" }),
-  async(req, res) => {
+  async (req, res) => {
+    try {
+      console.log("Webhook request received");
 
-    console.log("Webhook request received");
+      const event = JSON.parse(req.body.toString());
 
-    const event = JSON.parse(req.body.toString());
+      console.log("Event type:", event.type);
 
-    console.log("Event type:", event.type);
-    if (event.type === "checkout.session.completed") {
+      if (event.type === "checkout.session.completed") {
+        console.log("Payment successfully completed!");
 
-  console.log("Payment successfully completed!");
+        const session = event.data.object;
 
-  const session = event.data.object;
+        console.log("Session ID:", session.id);
+        console.log("Amount:", session.amount_total);
+        console.log("Currency:", session.currency);
+        console.log("Payment status:", session.payment_status);
 
-  console.log("Session ID:", session.id);
-  console.log("Amount:", session.amount_total);
-  console.log("Currency:", session.currency);
-  console.log("Payment status:", session.payment_status);
+        const lineItems = await stripe.checkout.sessions.listLineItems(
+          session.id
+        );
 
-  const lineItems = await stripe.checkout.sessions.listLineItems(
-    session.id
-  );
+        const item = lineItems.data[0];
 
-  const item = lineItems.data[0];
+        console.log("Product:", item.description);
+        console.log("Quantity:", item.quantity);
+        console.log("Total:", item.amount_total);
+        console.log("Currency:", item.currency);
 
-  console.log("Product:", item.description);
-  console.log("Quantity:", item.quantity);
-  console.log("Total:", item.amount_total);
-  console.log("Currency:", item.currency);
+        const order = {
+          sessionId: session.id,
+          product: item.description,
+          quantity: item.quantity,
+          amount: item.amount_total,
+          currency: item.currency,
+          paymentStatus: session.payment_status,
+        };
 
-  const order = {
-    sessionId: session.id,
-    product: item.description,
-    quantity: item.quantity,
-    amount: item.amount_total,
-    currency: item.currency,
-    paymentStatus: session.payment_status,
-  };
+        console.log("Order:", order);
+        const existingOrder = await Order.findOne({
+  sessionId: session.id,
+});
+        if (existingOrder) {
+          console.log("Order already exists in database:", existingOrder);
+          res.sendStatus(200);
+          return;
+        }
+        const savedOrder = await Order.create(order);
 
-  console.log("Order:", order);
+        console.log("Order saved to database:", savedOrder);
+      }
+
+      res.sendStatus(200);
+
+    } catch (error) {
+      console.error("Webhook Error:", error);
+      res.sendStatus(500);
     }
-    
-    res.sendStatus(200);
-  }  
+  }
 );
 app.use(express.json());
 
@@ -74,6 +91,30 @@ app.get("/stripe-test", (req, res) => {
     message: "Stripe Connected Successfully",
     keyExists: !!process.env.STRIPE_SECRET_KEY,
   });
+});
+app.get("/orders", async (req, res) => {
+  try {
+    const orders = await Order.find();
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({
+      message: "Failed to fetch orders",
+    });
+  }
+});
+
+app.get("/orders/:id", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    res.json(order);
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).json({
+      message: "Failed to fetch order",
+    });
+  }
 });
 app.post("/create-checkout-session", async (req, res) => {
   try {
