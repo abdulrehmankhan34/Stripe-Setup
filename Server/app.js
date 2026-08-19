@@ -116,6 +116,39 @@ app.get("/orders/:id", async (req, res) => {
     });
   }
 });
+app.delete("/deleteOrders/:id", async (req, res) => {
+  try {
+    const deleteOrder = await Order.deleteOne({
+      _id: req.params.id
+    });
+
+    res.json(deleteOrder);
+  } catch (error) {
+
+    console.error("Error deleting order:", error);
+
+    res.status(500).json({
+      message: "Failed to delete Order",
+    });
+  }
+});
+app.put("/updateOrders/:id", async (req, res) => {
+  try {
+    const updatedOrder = await Order.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error("Error updating order:", error);
+
+    res.status(500).json({
+      message: "Failed to update order",
+    });
+  }
+});
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
