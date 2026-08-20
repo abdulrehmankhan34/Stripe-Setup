@@ -165,7 +165,7 @@ app.post("/create-checkout-session", async (req, res) => {
             unit_amount: 10000, // $100 in cents
           },
 
-          quantity: 5,
+          quantity: 2,
         },
       ],
       success_url: "http://localhost:5173/success",

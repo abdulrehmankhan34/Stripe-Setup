@@ -4,6 +4,8 @@ import MiniShop from './MiniShop'
 import './App.css'
 import Success from './Success'
 import Cancel from './Cancel'
+// import Order from '../../Server/models/Order'
+import OrderDetails from './OrderDetails'
 
 function App() {
 
@@ -15,6 +17,7 @@ function App() {
           <Route path='/' element={<MiniShop />} />
           <Route path='/success' element={<Success />} />
           <Route path='/cancel' element={<Cancel />} />
+          <Route path='/orders/:id' element={<OrderDetails />} />
         </Routes>
       </BrowserRouter>
            
