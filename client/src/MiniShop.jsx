@@ -36,6 +36,24 @@ function MiniShop() {
 
     window.location.href = data.url;
     }
+    async function handleDelete(id) {
+    const response = await fetch(
+  `http://localhost:3000/deleteOrders/${id}`,
+  {
+    method: "DELETE",
+  }
+  
+);
+ const data = await response.json();
+
+  console.log(data);
+  if (data.deletedCount === 1) {
+  setOrders((oldOrders) =>
+    oldOrders.filter((order) => order._id !== id)
+  );
+}
+
+}
     return (
       <div>
       <h1>Mini Shop!</h1>
@@ -71,6 +89,9 @@ function MiniShop() {
   <Link to={`/orders/${order._id}`}>
   View Order
 </Link>
+</button>
+<button onClick={() => handleDelete(order._id)}>
+  Delete Order
 </button>
         </div>
       ))}
