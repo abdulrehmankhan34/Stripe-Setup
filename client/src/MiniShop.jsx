@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 function MiniShop() {
     const [orders, setOrders] = useState([]);
-    const [selectedOrder, setSelectedOrder] = useState(null);
+    // const [selectedOrder, setSelectedOrder] = useState(null);
 
     useEffect(() => {
   fetch("http://localhost:3000/orders")
